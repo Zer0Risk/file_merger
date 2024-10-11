@@ -8,3 +8,4 @@ Put the file you want to merge, or the directory with a wildcard (*)
 Press Enter
 Enter a destination filename.
 Profit
+
