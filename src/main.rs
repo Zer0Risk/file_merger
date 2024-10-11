@@ -1,9 +1,10 @@
-use std::io::{self, stdout, Write};
+use std::io::{self, stdout, stdin, Write};
 use std::path::{Path, PathBuf};
 use std::fs::{read, OpenOptions};
 use std::error::Error;
 use std::env;
 use glob;
+use chrono::prelude::*;
 
 #[derive(Debug)]
 struct FileToMerge {
@@ -39,7 +40,13 @@ fn get_files_to_merge() -> Vec<FileToMerge> {
     
     loop {
 
-        print!("File Path: ");
+        if ret_file_paths.len() == 0 {
+            print!("File Path: ");
+        } 
+        else if ret_file_paths.len() > 0 {
+            print!("File Path or Press Enter to start merge: ");
+        }
+        
         stdout().flush().unwrap();
 
         let input = get_stripped_stdin();
@@ -96,12 +103,14 @@ fn write_combined_file(files_to_merge:&Vec<FileToMerge>) -> io::Result<()> {
     let mut dest_file_path = PathBuf::new();
 
     loop {
+        let local_time_now = Local::now().format("%d_%m_%Y_%H_%M_%S");
         print!("What should the name of the merged file be: ");
         stdout().flush().unwrap();
 
+        // TODO: dynamic file name if no name is provided, just include the time in the filename
         let input = get_stripped_stdin();
         dest_file_path = match input.as_str() {
-            "" => current_dir.join("merged_file"),
+            "" => current_dir.join(format!("merged_file-{local_time_now}")),
             value if input.contains("\\") || input.contains("/") => PathBuf::from(value),
             value => current_dir.join(&value),
         };
@@ -130,16 +139,20 @@ fn write_combined_file(files_to_merge:&Vec<FileToMerge>) -> io::Result<()> {
 
 
 fn main() -> Result<(), Box<dyn Error>> {
-    
     let mut files_to_merge = get_files_to_merge();
     add_content(&mut files_to_merge)?;
 
 
+    println!("Files that will be merged: ");
     for file in &files_to_merge {
         println!("{:?}", file.file_path);
     }
     
     write_combined_file(&files_to_merge)?;
+
+    
+    println!("Press Enter to close");
+    stdin().read_line(&mut String::from(""))?;
     
     Ok(())
 }
