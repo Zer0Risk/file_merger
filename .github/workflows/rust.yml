@@ -11,10 +11,29 @@ jobs:
       matrix:
         target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl]
     steps:
-      - uses: actions/checkout@master
-      - name: Compile and release
-        uses: rust-build/rust-build.action@v1.4.5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Checkout the repository
+      - uses: actions/checkout@v2
+      
+      # Install Rust and required target
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
-          RUSTTARGET: ${{ matrix.target }}
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      # Verify the Rust version and installed target
+      - name: Verify Rust installation
+        run: rustc --version && rustup target list --installed
+
+      # Compile the project for the target
+      - name: Build the project
+        run: cargo build --release --target ${{ matrix.target }}
+
+      # Create a release artifact
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release
